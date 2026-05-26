@@ -4,6 +4,8 @@ I mentor someone from a low-income community and built software to support that 
 
 This repo is the research tool I built to iterate on that problem. It takes a sequence of free-text mentor notes and builds two models in parallel: one of the mentee, one of the mentor. It evaluates itself by predicting what each new note will contain before reading it.
 
+[Blog post: what I learned building this](https://infinitecare.substack.com/p/ai-mentor-copilot)
+
 ## The problem
 
 A mentor meets with someone for an hour. They write a few paragraphs of notes. Over months, those notes accumulate into a pile of unstructured text. The mentor remembers some of it. They forget most of it. When they need to help their mentee find a job, apply for a program, or navigate a family situation, they're working from a fragmentary mental model of who this person is, what they value, and what constraints they're operating under.
