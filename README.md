@@ -1,8 +1,10 @@
 # AI Mentor Copilot: User Model Lab
 
-I mentor someone from a low-income community and built software to support that work. The bottleneck was never the app. The bottleneck was maintaining a structured, evolving model of a person from unstructured session notes.
+I mentor a young man from a low-income community in Boston. The relationship is what keeps him motivated. But I'm from New York. I don't know the local infrastructure: job programs, housing resources, career pathways available to him.
 
-This repo is the research tool I built to iterate on that problem. It takes a sequence of free-text mentor notes and builds two models in parallel: one of the mentee, one of the mentor. It evaluates itself by predicting what each new note will contain before reading it.
+AI can find hundreds of options in seconds. The problem is that those options are useless unless they're personalized to what he actually values and is looking for. He cares about building things, not consulting. He cares about social impact but needs financial stability. A generic search doesn't know any of this.
+
+This repo is the tool I built to solve that problem. It takes a sequence of free-text mentor notes, builds a structured model of who the person is (values, beliefs, goals, key relationships), and uses that model to search for and score real resources personalized to them.
 
 [Blog post: what I learned building this](https://infinitecare.substack.com/p/ai-mentor-copilot)
 
