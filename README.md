@@ -12,7 +12,7 @@ Can a system extract a structured, confidence-scored, bounded-size model of a pe
 
 ## The approach
 
-**1. Dual extraction.** Each mentor note produces two model updates. The mentee model captures their values, beliefs, goals, and relationships. The mentor model captures the mentor's own attention patterns, framing, and blind spots. The same note is evidence about both people — what the mentor chose to write down is as revealing as what the mentee said (cf. observer models in cooperative inference; Griffiths et al., 2008; Shafto et al., 2014).
+**1. Dual extraction.** Each mentor note produces two model updates. The mentee model captures their values, beliefs, goals, and relationships. The mentor model captures the mentor's own attention patterns, framing, and blind spots. The same note is evidence about both people — what the mentor chose to write down is as revealing as what the mentee said.
 
 **2. Model-grounded conversation.** Once structured models exist, an AI agent uses them to help the mentor research options. The agent cites specific model entries when making suggestions, flags tensions between the mentee's values and their constraints, and tracks the mentor's intent in a structured workspace.
 
@@ -62,7 +62,7 @@ This is an informal version of held-out log-likelihood: if the model can predict
 
 ## Technical details
 
-The model has a fixed capacity. Each update replaces the prior estimate rather than appending to an unbounded log — closer to a rational agent maintaining a bounded memory (Anderson, 1990) than to a Kalman filter (which assumes linear dynamics and Gaussian noise absent here). Confidence scores (0-1) on every field. Evidence is direct quotes from notes, never fabricated. What to forget is delegated to the LLM's judgment via prompts; formalizing this as a retention policy is an open problem.
+The model has a fixed capacity. Each update replaces the prior estimate rather than appending to an unbounded log. Confidence scores (0-1) on every field. Evidence is direct quotes from notes, never fabricated. What to forget is delegated to the LLM's judgment via prompts; formalizing this as a retention policy is an open problem.
 
 The model schema is not hardcoded. `UserModel` is `Record<string, unknown>`, and the system dispatches on shape at runtime: arrays get add/update/remove deltas, objects with sub-arrays get nested merging. The schema emerges from the LLM's output, guided by the prompt's JSON template. Whether the LLM discovers useful structure beyond what the template suggests is an open question about inductive bias.
 
