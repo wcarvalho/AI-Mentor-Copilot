@@ -1,0 +1,23 @@
+{
+  "name": "user-model-lab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run server.ts & bunx vite",
+    "server": "bun run server.ts",
+    "client": "bunx vite"
+  },
+  "dependencies": {
+    "@types/marked": "^6.0.0",
+    "marked": "^17.0.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.0"
+  }
+}
