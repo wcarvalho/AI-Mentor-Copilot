@@ -4,7 +4,7 @@ In mentoring, the relationship is what drives change. But mentors often lack kno
 
 This is a sociotechnical problem: how do you get AI's knowledge to the mentor without putting AI in the room, and how do you keep that knowledge faithful to who the mentee actually is?
 
-This repo is one answer. It builds structured, evolving models of people from unstructured text (mentor notes), then uses those models *before* sessions to search for and score real resources personalized to them. The mentor shows up prepared. The AI stays out of the conversation.
+This project grew out of a grant proposal to the [GitLab Foundation Future of Work program](https://www.gitlabfoundation.org/futureofwork), where it was selected as a finalist (top 7%). This repo is the implementation. It builds structured, evolving models of people from unstructured text (mentor notes), then uses those models *before* sessions to search for and score real resources personalized to them. The mentor shows up prepared. The AI stays out of the conversation.
 
 [Blog post: what I learned building this](https://infinitecare.substack.com/p/ai-mentor-copilot)
 
