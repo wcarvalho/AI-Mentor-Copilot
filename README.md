@@ -58,12 +58,6 @@ The **resource list** (right) shows ranked results. Each resource has domain tag
 
 This solves the wall-of-text problem. Instead of 5 pages of reasoning with no clear answer, decisions are structured visually. The mentor can explore: "what if financial stability matters more than location?" Toggle, re-rank, see what changes.
 
-## 5. Prediction-based evaluation
-
-Before processing note *k*, the system generates a factual question from the note, then predicts the answer using only model *k-1*. A prediction score (0-1, LLM-judged) tracks how well the model anticipates new observations.
-
-This is an informal version of held-out log-likelihood: if the model can predict what shows up in the next note, it is capturing something real. But it tests surface-level predictive accuracy, not whether the model has captured latent structure. A model that tracks recurring topics without inferring underlying values would score well. The LLM judge adds a further confound. Still, it provides a continuous signal for iterating on prompts and model structure without labeled data.
-
 ## Architecture
 
 - **Runtime**: Bun
