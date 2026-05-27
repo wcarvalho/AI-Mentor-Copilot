@@ -1,76 +1,68 @@
-# AI Mentor Copilot: User Model Lab
+# AI Mentor Copilot
 
-I mentor a young man from a low-income community in Boston. The relationship is what keeps him motivated. But I'm from New York. I don't know the local infrastructure: job programs, housing resources, career pathways available to him.
+In mentoring, the relationship is what drives change. But mentors often lack knowledge: which programs exist, which career paths fit, which resources are available for someone with specific values, constraints, and relationships. AI has that knowledge. The problem is that using AI *during* a session destroys the relationship. It breaks presence, overwhelms with unreadable output, loses personalization over long conversations, and fabricates information about the people it's trying to help.
 
-AI can find hundreds of options in seconds. The problem is that those options are useless unless they're personalized to what he actually values and is looking for. He cares about building things, not consulting. He cares about social impact but needs financial stability. A generic search doesn't know any of this.
+This is a sociotechnical problem: how do you get AI's knowledge to the mentor without putting AI in the room, and how do you keep that knowledge faithful to who the mentee actually is?
 
-This repo is the tool I built to solve that problem. It takes a sequence of free-text mentor notes, builds a structured model of who the person is (values, beliefs, goals, key relationships), and uses that model to search for and score real resources personalized to them.
+This repo is one answer. It builds structured, evolving models of people from unstructured text (mentor notes), then uses those models *before* sessions to search for and score real resources personalized to them. The mentor shows up prepared. The AI stays out of the conversation.
 
 [Blog post: what I learned building this](https://infinitecare.substack.com/p/ai-mentor-copilot)
 
-## The problem
-
-A mentor meets with someone for an hour. They write a few paragraphs of notes. Over months, those notes accumulate into a pile of unstructured text. The mentor remembers some of it. They forget most of it. When they need to help their mentee find a job, apply for a program, or navigate a family situation, they're working from a fragmentary mental model of who this person is, what they value, and what constraints they're operating under.
-
-Can a system extract a structured, confidence-scored, bounded-size model of a person from sequential unstructured notes, update it incrementally, and use it to ground downstream planning?
-
-## The approach
-
-**1. Dual extraction.** Each mentor note produces two model updates. The mentee model captures their values, beliefs, goals, and relationships. The mentor model captures the mentor's own attention patterns, framing, and blind spots. The same note is evidence about both people — what the mentor chose to write down is as revealing as what the mentee said.
-
-**2. Model-grounded conversation.** Once structured models exist, an AI agent uses them to help the mentor research options. The agent cites specific model entries when making suggestions, flags tensions between the mentee's values and their constraints, and tracks the mentor's intent in a structured workspace.
-
-**3. Personalized resource scoring.** The system searches for real resources (jobs, programs, tools), generates scoring dimensions from the person model, and scores each resource on each dimension. The output is an interactive page where the mentor can re-weight what matters and re-rank options.
-
-## What each stage looks like
-
-### Stage 1: Note → Mentee model + Mentor model
+## 1. Maintaining a user model
 
 ![Model Update](assets/model-update.png)
 
-Each row shows a mentor note (left) and the two models extracted from it (center and right). The layout reads left-to-right as input → output.
+Each mentor note updates two structured models: one of the mentee, one of the mentor. The layout above shows a note (left) and the two models extracted from it (center and right).
 
-The **mentee model** (center) extracts values, beliefs, and goals with confidence scores — each accumulating evidence across notes (the `(2)` prefix means two notes contributed). Beliefs are quoted from the mentee's words: *"Big tech is ethically compromised, especially around data practices."*
+**The mentee model** captures values, beliefs, goals, and key relationships. Each field carries a confidence score (0-1) and accumulates evidence across notes. The `(2)` prefix means two notes contributed evidence for that entry. Beliefs are quoted from the mentee's words, never paraphrased: *"Big tech is ethically compromised, especially around data practices."*
 
-The **mentor model** (right) extracts what the note reveals about the *mentor*. "Surfacing internal tensions in mentees" describes an attention pattern. The mentor's goal, "Help Jordan navigate the values-vs-livelihood tension before graduation," captures what the mentor is optimizing for. This is not the mentee's goal. It is the mentor's framing of the problem.
+**The mentor model** captures the mentor's own attention patterns, framing, and blind spots. "Surfacing internal tensions in mentees" (0.5) describes what the mentor focuses on. "Help Jordan navigate the values-vs-livelihood tension before graduation" (0.4) is the mentor's goal, not the mentee's. The same note is evidence about both people: what the mentor chose to write down is as revealing as what the mentee said.
 
-The model has fixed capacity — each update replaces the prior, and what to forget is an open problem.
+**People and theory of mind.** We're a deeply social species. Who the mentee cares about shapes what options are viable. The model represents specific people in the mentee's life with two sub-arrays: **situation** (observable facts: "Matched into residency at UPMC in Pittsburgh") and **innerModel** (the mentee's interpretation of what this person thinks or feels: "Sam's mother is not doing well health-wise"). This is a second-order theory of mind representation: what does person A think person B thinks? In an ideal world, you'd represent the relationships themselves as full models. Here, we use a list of people with attributed beliefs. It's a simplification, but it's enough to flag tensions during planning (e.g., a job opportunity that conflicts with a partner's constraints).
 
-### Stage 2: Model-grounded conversation
+**Bounded capacity.** The model has a fixed size. Each update replaces the prior estimate rather than appending to an unbounded log. Confidence scores on every field. Evidence is direct quotes, never fabricated. What to forget is delegated to the LLM's judgment via prompts; formalizing this as a retention policy is an open problem.
+
+**Schema-free.** The model schema is not hardcoded. `UserModel` is `Record<string, unknown>`, and the system dispatches on shape at runtime: arrays get add/update/remove deltas, objects with sub-arrays get nested merging. The schema emerges from the LLM's output, guided by the prompt's JSON template. Whether the LLM discovers useful structure beyond what the template suggests is an open question about inductive bias.
+
+## 2. AI workspace
 
 ![Planning Chat](assets/planning-chat.png)
 
-The planning tab uses the accumulated models to help the mentor research options. Three panes: models (left), conversation (center), workspace (right).
+The planning tab has three panes: models (left), conversation (center), workspace (right).
 
-The **conversation** (center) is between the mentor and a research librarian agent. The agent cites model entries by ID — `(1)`, `(2)`, `(3)` reference specific values, beliefs, or people-claims — so every suggestion traces back to evidence about the person.
+The core design problem: if the AI dumps its reasoning into the chat, the mentor drowns in text. The solution is to give the AI its own **workspace** (right pane) where it can freely write, annotate, and track structured state without cluttering the conversation.
 
-The **workspace** (right) tracks structured state derived from the models. **Understanding** lists scoring dimensions tagged with citations: `+ Hands-on building roles, not consulting or policy [MV4] [MB3]` means this dimension is grounded in mentee value 4 and mentee belief 3. The `+` and `~` prefixes indicate fit vs. tension. **Constraints** distinguish confirmed requirements (`✓ Graduating May [MG2]`) from soft inferences (`~ Sam likely wants Jordan nearby [MP6] [MP2]`).
+The **workspace** tracks: a **Goal** summarizing the mentor's intent, **Understanding** (scoring dimensions derived from the model, tagged with citations like `+ Hands-on building roles, not consulting or policy [MV4] [MB3]`), and **Constraints** (confirmed requirements `✓ Graduating May [MG2]` vs. soft inferences `~ Sam likely wants Jordan nearby [MP6] [MP2]`). The `+` and `~` prefixes indicate fit vs. tension.
 
-### Stage 3: Personalized resource board
+The **conversation** (center) stays focused. The agent asks questions, presents options, and confirms intent. Heavy reasoning goes to the workspace, not the chat.
+
+## 3. Model-cited reasoning
+
+Every model entry gets a numbered ID: `[MV1]` for the first mentee value, `[MB2]` for the second mentee belief, `[MP3]` for the third person-claim. The AI is required to cite these IDs when making suggestions. In the planning chat, `(1)`, `(2)`, `(3)` reference specific model entries. In the workspace, dimensions like `+ Social impact or mission-driven orgs [MV1]` trace back to a specific value with specific evidence.
+
+This is not just provenance. Forcing the model to cite its sources when reasoning is a hypothesis about adherence: **if the LLM must reference the user model explicitly in its output, it stays grounded in what the person actually said rather than drifting toward generic advice.** This is testable. Compare cited vs. uncited responses on the same queries and measure how often the output reflects the specific person vs. a generic archetype.
+
+The citation IDs flow from the model through the planning chat to the workspace to the final artifact. Every recommendation in the resource board traces back to a specific model entry.
+
+## 4. Interactive resource page
 
 ![Resource Board](assets/resource-board.png)
 
-After researching across 10 domains, the system scores 108 resources on dimensions derived from the mentee's model and produces an interactive artifact page.
+After researching across multiple domains, the system scores resources on dimensions derived from the mentee's model and produces an interactive artifact page.
 
-**Filter pills** across the top are the scoring dimensions. The mentor toggles dimensions on/off and the ranking updates live. "71 of 108 — 37 didn't meet requirements" reflects the current filter state.
+**Filter pills** across the top are the scoring dimensions: "Hands-On Building," "Pittsburgh or Nearby," "Meaningful Social Impact," "Ethically Clean on Data." The mentor toggles dimensions on/off and the ranking updates live. "71 of 108 — 37 didn't meet requirements" reflects the current filter state.
 
-The **left sidebar** shows the person model that grounds the scoring. This is where the `people` field becomes visible: the mentee model represents specific people in the mentee's life with two sub-arrays — **situation** (observable facts like "Matched into residency at UPMC in Pittsburgh") and **innerModel** (the mentee's interpretation of what this person thinks or feels, like "Sam's mother is not doing well health-wise"). These are attributed beliefs, not recursive inference over nested mental models. Key values appear below with evidence quotes from the original notes.
+The **left sidebar** shows the person model that grounds the scoring: key values with evidence quotes from the original notes, and the `people` field showing relationship constraints.
 
-Every recommendation traces back to specific model entries. The mentor sees why something ranks high and can override it.
+The **resource list** (right) shows ranked results. Each resource has domain tags, a one-line description, and expandable per-dimension scores. The mentor sees why something ranks high and can override it.
 
-## Prediction-based evaluation
+This solves the wall-of-text problem. Instead of 5 pages of reasoning with no clear answer, decisions are structured visually. The mentor can explore: "what if financial stability matters more than location?" Toggle, re-rank, see what changes.
+
+## 5. Prediction-based evaluation
 
 Before processing note *k*, the system generates a factual question from the note, then predicts the answer using only model *k-1*. A prediction score (0-1, LLM-judged) tracks how well the model anticipates new observations.
 
 This is an informal version of held-out log-likelihood: if the model can predict what shows up in the next note, it is capturing something real. But it tests surface-level predictive accuracy, not whether the model has captured latent structure. A model that tracks recurring topics without inferring underlying values would score well. The LLM judge adds a further confound. Still, it provides a continuous signal for iterating on prompts and model structure without labeled data.
-
-## Technical details
-
-The model has a fixed capacity. Each update replaces the prior estimate rather than appending to an unbounded log. Confidence scores (0-1) on every field. Evidence is direct quotes from notes, never fabricated. What to forget is delegated to the LLM's judgment via prompts; formalizing this as a retention policy is an open problem.
-
-The model schema is not hardcoded. `UserModel` is `Record<string, unknown>`, and the system dispatches on shape at runtime: arrays get add/update/remove deltas, objects with sub-arrays get nested merging. The schema emerges from the LLM's output, guided by the prompt's JSON template. Whether the LLM discovers useful structure beyond what the template suggests is an open question about inductive bias.
-
-Every model entry gets a numbered ID: `[MV1]` for the first mentee value, `[MB2]` for the second mentee belief, `[MP3]` for the third person-claim. These IDs flow from the model through the planning chat to the workspace to the artifact.
 
 ## Architecture
 
@@ -98,7 +90,7 @@ Open `http://localhost:5174`. Paste or drag-drop mentor notes into the timeline.
 
 ## Status
 
-This is an active personal project, motivated by a broader goal: AI that helps mentors with limited time and limited knowledge of available systems serve more people — not by replacing mentors, but by streamlining the work outside the relationship. The pipeline works end-to-end, but I haven't run systematic evaluations yet. The immediate question is whether prediction accuracy correlates with downstream planning quality: whether a better model produces better-scored resources. I'm open to collaborators, especially on evaluation methodology and scaling beyond single-case mentoring.
+This is an active personal project. The pipeline works end-to-end and the resource finding, scoring, and chat have been useful in practice, but I haven't run systematic evaluations yet. The immediate question is whether prediction accuracy correlates with downstream planning quality: whether a better model produces better-scored resources. I'm open to collaborators, especially on evaluation methodology and scaling beyond single-case mentoring.
 
 ## Project structure
 
