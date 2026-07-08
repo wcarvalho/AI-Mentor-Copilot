@@ -6,7 +6,7 @@ This is a sociotechnical problem: how do you get AI's knowledge to the mentor wi
 
 This project grew out of a grant proposal to the [GitLab Foundation Future of Work program](https://www.gitlabfoundation.org/futureofwork), where it was selected as a finalist (top 7%). This repo is the implementation. It builds structured, evolving models of people from unstructured text (mentor notes), then uses those models *before* sessions to search for and score real resources personalized to them. The mentor shows up prepared. The AI stays out of the conversation.
 
-[Blog post: what I learned building this](https://infinitecare.substack.com/p/ai-mentor-copilot)
+[Blog post: what I learned building this](https://infinitecare.substack.com/p/what-i-learned-building-an-ai-mentor)
 
 ## 1. Maintaining a user model
 
